@@ -56,6 +56,8 @@ struct UserStabData {
 //		stab_binsearch(stabs, &left, &right, N_SO, 0xf0100184);
 //	will exit setting left = 118, right = 554.
 //
+//stab_binsearch(stabs, &lline, &rline, N_SLINE, addr);
+    
 static void
 stab_binsearch(const struct Stab *stabs, int *region_left, int *region_right,
 	       int type, uintptr_t addr)
@@ -205,7 +207,12 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
 	//	Look at the STABS documentation and <inc/stab.h> to find
 	//	which one.
 	// Your code here.
-
+        stab_binsearch(stabs, &lline, &rline, N_SLINE, addr);
+        if(lline <= rline) {
+                info->eip_line = stabs[lline].n_desc;
+        } else {
+                return(-1);
+ }
 
 	// Search backwards from the line number for the relevant filename
 	// stab.
