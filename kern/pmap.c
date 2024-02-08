@@ -315,8 +315,24 @@ page_init(void)
 struct PageInfo *
 page_alloc(int alloc_flags)
 {
-	// Fill this function in
-	return 0;
+	
+	// Out of mem check
+	if (page_free_list == NULL) { return NULL };
+
+	//Grab page from free list
+	struct PageInfo* new_pg = page_free_list;
+	new_pg->pp_link = NULL; // No longer free	
+
+	// Move to next free page
+	page_free_list = page_free_list->pp_link;
+
+	// Check if need to zero mem
+	if (allo_flags & ALLOC_ZERO)
+	{
+		memset(page2kva(new_pg), 0, PGSIZE);
+	}
+
+	return new_pg;
 }
 
 //
@@ -328,7 +344,13 @@ page_free(struct PageInfo *pp)
 {
 	// Fill this function in
 	// Hint: You may want to panic if pp->pp_ref is nonzero or
-	// pp->pp_link is not NULL.
+	// pp->pp_link is not NULL
+	if (pp->pp_ref != 0) { panic("page_free: Ref count not 0!"); }
+	if (pp->pp_link != NULL) { panic("page_free: Link not NULL!"); }
+
+	// Attach to the list at the front and make pp the new head
+	pp->pp_link = page_free_list;
+	page_free_list = pp;
 }
 
 //
