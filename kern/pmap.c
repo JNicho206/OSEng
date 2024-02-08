@@ -114,7 +114,7 @@ boot_alloc(uint32_t n)
 
 	if (0xFFFFFFFF - sz > nextfree)
 	{
-		panic("");
+		panic("Out of memory in boot_alloc!");
 	}
 	nextfree += sz;
 	//Check if next free is out of mem range
@@ -165,8 +165,8 @@ mem_init(void)
 	// array.  'npages' is the number of physical pages in memory.  Use memset
 	// to initialize all fields of each struct PageInfo to 0.
 	// Your code goes here:
-
-
+	pages = (struct PageInfo *)boot_alloc(sizeof(struct PageInfo) * npages);
+	memset(pages, 0, sizeof(struct PageInfo) * npages);
 	//////////////////////////////////////////////////////////////////////
 	// Now that we've allocated the initial kernel data structures, we set
 	// up the list of free physical pages. Once we've done so, all further
@@ -272,6 +272,28 @@ page_init(void)
 	// free pages!
 	size_t i;
 	for (i = 0; i < npages; i++) {
+		//Page 0
+		if (i==0)
+		{
+			page[i].pp_ref = 1;
+			continue;
+		}
+
+		//IO Hole should not be free
+		uint32_t addr = KERNBASE + (i * PGSIZE);
+		if ((addr > KERNBASE + IOPHYSMEM) && (addr < KERNBASE + EXTPHYSMEM))
+		{
+			page[i].pp_ref = 1;
+			continue;	
+		}
+
+		// Mem for kernel data should not be free
+		if ((addr > KERNBASE + EXTPHYSMEM) && (addr < ROUNDUP((uint32_t)end, PGSIZE)))
+		{
+			page[i].pp_ref = 1;
+			continue;
+		}
+
 		pages[i].pp_ref = 0;
 		pages[i].pp_link = page_free_list;
 		page_free_list = &pages[i];
