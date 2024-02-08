@@ -110,12 +110,12 @@ boot_alloc(uint32_t n)
 	//Check if nextfree + n > top of mem -> panic
 	//else n > 0 so allocate pages for n bytes of contiguous physical memory
 	uint32_t sz = ROUNDUP(n, PGSIZE);
-	result = nextfree;
 
-	if (0xFFFFFFFF - sz > (uintptr_t)nextfree)
+	if (sz > 0xFFFFFFFF - (uintptr_t)nextfree)
 	{
 		panic("Out of memory in boot_alloc!");
 	}
+	result = nextfree;
 	nextfree += sz;
 	//Check if next free is out of mem range
 	
@@ -280,8 +280,8 @@ page_init(void)
 		}
 
 		//IO Hole should not be free
-		uintptr_t addr = KERNBASE + (i * PGSIZE);
-		if ((addr > KERNBASE + IOPHYSMEM) && (addr < KERNBASE + EXTPHYSMEM))
+		char*  addr = (i * PGSIZE);
+		if ((addr >= IOPHYSMEM) && (addr < EXTPHYSMEM))
 		{
 			pages[i].pp_ref = 1;
 			continue;	
@@ -290,7 +290,8 @@ page_init(void)
 		
 		// Mem for kernel data should not be free
 		extern char end[];
-		if ((addr > KERNBASE + EXTPHYSMEM) && (addr < (uintptr_t)ROUNDUP((char*)end, PGSIZE)))
+		char* kern_end = ROUNDUP(((char *) end), PGSIZE);
+		if ((addr >= EXTPHYSMEM) && (addr < kern_end))
 		{
 			pages[i].pp_ref = 1;
 			continue;
@@ -331,7 +332,7 @@ page_alloc(int alloc_flags)
 	// Check if need to zero mem
 	if (alloc_flags & ALLOC_ZERO)
 	{
-		memset(page2kva(new_pg), 0, PGSIZE);
+		memset(page2kva(new_pg), '\0', PGSIZE);
 	}
 
 	return new_pg;
