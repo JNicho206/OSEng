@@ -109,10 +109,10 @@ boot_alloc(uint32_t n)
 	}
 	//Check if nextfree + n > top of mem -> panic
 	//else n > 0 so allocate pages for n bytes of contiguous physical memory
-	uint32_t sz = ROUDNUP(n, PGSIZE);
+	uint32_t sz = ROUNDUP(n, PGSIZE);
 	result = nextfree;
 
-	if (0xFFFFFFFF - sz > nextfree)
+	if (0xFFFFFFFF - sz > (uintptr_t)nextfree)
 	{
 		panic("Out of memory in boot_alloc!");
 	}
@@ -142,7 +142,7 @@ mem_init(void)
 	i386_detect_memory();
 
 	// Remove this line when you're ready to test this function.
-	panic("mem_init: This function is not finished\n");
+	//panic("mem_init: This function is not finished\n");
 
 	//////////////////////////////////////////////////////////////////////
 	// create initial page directory.
@@ -275,22 +275,24 @@ page_init(void)
 		//Page 0
 		if (i==0)
 		{
-			page[i].pp_ref = 1;
+			pages[i].pp_ref = 1;
 			continue;
 		}
 
 		//IO Hole should not be free
-		uint32_t addr = KERNBASE + (i * PGSIZE);
+		uintptr_t addr = KERNBASE + (i * PGSIZE);
 		if ((addr > KERNBASE + IOPHYSMEM) && (addr < KERNBASE + EXTPHYSMEM))
 		{
-			page[i].pp_ref = 1;
+			pages[i].pp_ref = 1;
 			continue;	
 		}
 
+		
 		// Mem for kernel data should not be free
-		if ((addr > KERNBASE + EXTPHYSMEM) && (addr < ROUNDUP((uint32_t)end, PGSIZE)))
+		extern char end[];
+		if ((addr > KERNBASE + EXTPHYSMEM) && (addr < (uintptr_t)ROUNDUP((char*)end, PGSIZE)))
 		{
-			page[i].pp_ref = 1;
+			pages[i].pp_ref = 1;
 			continue;
 		}
 
@@ -317,7 +319,7 @@ page_alloc(int alloc_flags)
 {
 	
 	// Out of mem check
-	if (page_free_list == NULL) { return NULL };
+	if (page_free_list == NULL) { return NULL; }
 
 	//Grab page from free list
 	struct PageInfo* new_pg = page_free_list;
@@ -327,7 +329,7 @@ page_alloc(int alloc_flags)
 	page_free_list = page_free_list->pp_link;
 
 	// Check if need to zero mem
-	if (allo_flags & ALLOC_ZERO)
+	if (alloc_flags & ALLOC_ZERO)
 	{
 		memset(page2kva(new_pg), 0, PGSIZE);
 	}
