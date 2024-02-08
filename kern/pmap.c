@@ -102,8 +102,25 @@ boot_alloc(uint32_t n)
 	// to a multiple of PGSIZE.
 	//
 	// LAB 2: Your code here.
+	if (n == 0)
+	{
+		result = nextfree;
+		return result;
+	}
+	//Check if nextfree + n > top of mem -> panic
+	//else n > 0 so allocate pages for n bytes of contiguous physical memory
+	uint32_t sz = ROUDNUP(n, PGSIZE);
+	result = nextfree;
 
-	return NULL;
+	if (0xFFFFFFFF - sz > nextfree)
+	{
+		panic("");
+	}
+	nextfree += sz;
+	//Check if next free is out of mem range
+	
+
+	return result;
 }
 
 // Set up a two-level page table:
