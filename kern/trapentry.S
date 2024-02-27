@@ -66,7 +66,7 @@
 #TRAPHANDLER(t_align, T_ALIGN)
 #TRAPHANDLER_NOEC(t_mchk, T_MCHK)
 #TRAPHANDLER_NOEC(t_simderr, T_SIMDERR)
-
+#TRAPHANDLER_NOEC(t_syscall, T_SYSCALL)
 // HINT 1 : TRAPHANDLER_NOEC(t_divide, T_DIVIDE);
 //          Do something like this if there is no error code for the trap
 // HINT 2 : TRAPHANDLER(t_dblflt, T_DBLFLT);
