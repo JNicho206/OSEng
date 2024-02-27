@@ -1,0 +1,8 @@
+Exercise 4
+1. There are many features that would break if all interupts were invoked the same way. 
+- We would be unable to maintain information about how the interrupt was invoked.
+- We couldn't invoke a specific interrupt to handle when a user does something it doesn't have privelege.
+
+2. The softint program would not behave correctly if we have kernel protections in place that invoke interrupt 13 when the user does something
+doesn't have privelege for. It should produce interrupt 13 since the user shouldn't be able to manually call interrupt 14. If they could, kernel
+security would be weakened.
