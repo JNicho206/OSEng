@@ -81,6 +81,7 @@ void t_align();
 void t_mchk();
 void t_simderr();
 void t_syscall();
+
 void
 trap_init(void)
 {
@@ -96,6 +97,11 @@ trap_init(void)
      *
      */
 	// LAB 3: Your code here.
+	
+	
+	
+	
+	
 	SETGATE(idt[T_DIVIDE], 0, GD_KT, t_divide, 0);
 	SETGATE(idt[T_DEBUG], 0, GD_KT, t_debug, 0);
 	SETGATE(idt[T_NMI], 0, GD_KT, t_nmi, 0);
@@ -115,6 +121,7 @@ trap_init(void)
 	SETGATE(idt[T_MCHK], 0, GD_KT, t_mchk, 0);
 	SETGATE(idt[T_SIMDERR], 0, GD_KT, t_simderr, 0);
 	SETGATE(idt[T_SYSCALL], 0, GD_KT, t_syscall, 0);
+	
 	// Per-CPU setup
 	trap_init_percpu();
 }
@@ -194,23 +201,23 @@ trap_dispatch(struct Trapframe *tf)
 	// Handle processor exceptions.
 	// LAB 3: Your code here.
 	//Exercise 5
-	if (tf->trap_no == T_PGFLT)
+	if (tf->tf_trapno == T_PGFLT)
 	{
 		page_fault_handler(tf);
 	}
 
 	//Exercise 6
-	if (tf->trap_no == T_BRKPT)
+	if (tf->tf_trapno == T_BRKPT)
 	{
 		monitor(tf);
 	}
 
 	//Exercise 7
-	if (tf->trap_no == T_SYSCALL)
+	if (tf->tf_trapno == T_SYSCALL)
 	{
 		//Pass number back to user in eax
-		tf->tf_regs->reg_eax = syscall(tf->tf_regs->reg_eax, tf->tf_regs->reg_edx, tf->tf_regs->reg_ecx,
-						tf->tf_regs->reg_ebx, tf->tf_regs->reg_edi, tf->tf_regs->reg_esi);
+		tf->tf_regs.reg_eax = syscall(tf->tf_regs.reg_eax, tf->tf_regs.reg_edx, tf->tf_regs.reg_ecx,
+						tf->tf_regs.reg_ebx, tf->tf_regs.reg_edi, tf->tf_regs.reg_esi);
 	}
 	// Unexpected trap: The user process or the kernel has a bug.
 	print_trapframe(tf);

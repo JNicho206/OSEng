@@ -117,11 +117,11 @@ env_init(void)
 	// Set up envs array
 	// LAB 3: Your code here.
 	int i = NENV-1; //Start at the top so that the list is in the correct order
-	for (; i >= 0; i++)
+	for (; i >= 0; i--)
 	{
 		envs[i].env_id = 0;
 		envs[i].env_link = env_free_list;
-		env_free_list = envs[i];
+		env_free_list = &envs[i];
 	}
 	// Per-CPU part of the initialization
 	env_init_percpu();
@@ -349,11 +349,12 @@ load_icode(struct Env *e, uint8_t *binary)
 
 	// LAB 3: Your code here.
 	struct Elf * ELFHEADER = (struct Elf *) binary;
-	pde_t * cr3_value_original = rcr3(); //read original cr3 value
-	lcr3((PADDR(e->env_pgdir)); //load page directory address into cr3 register
+	//pde_t * cr3_value_original = rcr3(); //read original cr3 value
+	uint32_t cr3_value_original = rcr3();
+	lcr3((PADDR(e->env_pgdir))); //load page directory address into cr3 register
 	struct Proghdr *ph, *eph; //program header beggining and end
 	ph = (struct Proghdr *) ((uint8_t*)ELFHEADER + ELFHEADER->e_phoff); //program header beginning
-	eph = ph + (ELFHEADER->e_phnum) //program header end
+	eph = ph + (ELFHEADER->e_phnum); //program header end
 	while(ph < eph){
 			if(ph->p_type == ELF_PROG_LOAD){
 					region_alloc(e, (void*)ph->p_va, ph->p_memsz); //alloc environment space
@@ -385,7 +386,7 @@ env_create(uint8_t *binary, enum EnvType type)
 	// LAB 3: Your code here.
 	struct Env* e;
 	env_alloc(&e, 0);
-	load_icode(e, binary;
+	load_icode(e, binary);
 }
 
 //
