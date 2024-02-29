@@ -348,11 +348,28 @@ load_icode(struct Env *e, uint8_t *binary)
 	//  What?  (See env_run() and env_pop_tf() below.)
 
 	// LAB 3: Your code here.
+	struct Elf * ELFHEADER = (struct Elf *) binary;
+	pde_t * cr3_value_original = rcr3(); //read original cr3 value
+	lcr3((PADDR(e->env_pgdir)); //load page directory address into cr3 register
+	struct Proghdr *ph, *eph; //program header beggining and end
+	ph = (struct Proghdr *) ((uint8_t*)ELFHEADER + ELFHEADER->e_phoff); //program header beginning
+	eph = ph + (ELFHEADER->e_phnum) //program header end
+	while(ph < eph){
+			if(ph->p_type == ELF_PROG_LOAD){
+					region_alloc(e, (void*)ph->p_va, ph->p_memsz); //alloc environment space
+					memset((void*)ph->p_va, 0, ph->p_memsz); //zero out ph->p_va
+					memcpy((void*)ph->p_va, binary+ph->p_offset, ph->p_filesz); //copy ph0>p_filesz bytea from elf binary to virtual address ph->p_va
+			}
+			ph++; //increase ph pointer
+	}
 
 	// Now map one page for the program's initial stack
 	// at virtual address USTACKTOP - PGSIZE.
 
 	// LAB 3: Your code here.
+	region_alloc(e, ((void*)(USTACKTOP - PGSIZE)), PGSIZE); //map one page for program's initial stack
+	e->env_tf.tf_eip = ELFHEADER -> e_entry; //update eip
+	lcr3(cr3_value_original); //go back to original cr3 reg value
 }
 
 //
