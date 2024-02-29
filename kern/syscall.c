@@ -21,7 +21,10 @@ sys_cputs(const char *s, size_t len)
 	// Destroy the environment if not.
 
 	// LAB 3: Your code here.
-
+	if(user_mem_check(curenv, s, len, PTE_U) != 0){
+        envid_t curr_envid = sys_getenvid();
+        sys_env_destroy(curr_envid);
+    	}
 	// Print the string supplied by the user.
 	cprintf("%.*s", len, s);
 }

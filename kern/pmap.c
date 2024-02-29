@@ -591,7 +591,38 @@ int
 user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 {
 	// LAB 3: Your code here.
+	pte_t * pte; //page table entry
+	uint32_t start_first_page = (uint32_t) ROUNDDOWN(va, PGSIZE);
+	uint32_t end_last_page = (uint32_t) ROUNDUP(va + len, PGSIZE);
+	if(end_last_page >= ULIM){ //check if range falls below limit
+			user_mem_check_addr = end_last_page - PGSIZE; //beginning of last page is erroneous
+			return(-E_FAULT);
+	}
+	int num_pages;
+	if(start_first_page == (uint32_t)va && end_last_page == (uint32_t)(va+len)){ //both pointers are page aligned
+			num_pages = len/PGSIZE;
+	}
+	else if((start_first_page == (uint32_t)va && end_last_page != (uint32_t)(va+len)) || (start_first_page != (uint32_t)va && end_last_page == (uint32_t)(va+len))){ //va is page aligned but va + len is not
+			num_pages = len/PGSIZE + 1;
+	}
+	else{ //neither pointer is page aligned
+			num_pages = len/PGSIZE + 2;
+	}
 
+	for(int i = 0; i < num_pages; i++){
+			pte = pgdir_walk(env->env_pgdir, (void*)start_first_page, false); //get page table entry
+			if(pte == NULL || !((*pte) & (PTE_P | perm))){
+					if(i == 0){ //first erroneous is guaranteed to be va
+							user_mem_check_addr = (uint32_t)va;
+							return(-E_FAULT);
+					}
+					else{
+							user_mem_check_addr = (uint32_t)start_first_page;
+							return(-E_FAULT);
+					}
+			}
+			start_first_page += PGSIZE;
+	}
 	return 0;
 }
 
