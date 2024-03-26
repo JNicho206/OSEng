@@ -281,7 +281,10 @@ mem_init_mp(void)
 	//     Permissions: kernel RW, user NONE
 	//
 	// LAB 4: Your code here:
-
+	for (int i = 0; i < NCPU; i++)
+	{
+		boot_map_region(kern_pgdir, KSTACKTOP - KSTKSIZE - i * (KSTKSIZE + KSTKGAP), KSTKSIZE, PADDR(percpu_kstacks[i]), PTE_W);
+	}
 }
 
 // --------------------------------------------------------------
@@ -323,7 +326,7 @@ page_init(void)
 	
 	size_t i;
 	//Exclude page 0 but mark free the rest of basemem
-	for (i = 1; i < npages_basemem; i++)
+	for (i = 1; i < MPENTRY_PADDR; i++)
 	{
 		pages[i].pp_ref = 0;
 		pages[i].pp_link = page_free_list;
@@ -633,6 +636,13 @@ mmio_map_region(physaddr_t pa, size_t size)
 	// Hint: The staff solution uses boot_map_region.
 	//
 	// Your code here:
+	
+	pa = ROUNDDOWN(pa, PGSIZE);
+	size = ROUNDUP(pa + size, PGSIZE) - pa;
+	if (base + size > MMIOLIM) panic("Not enough space");
+	boot_map_region(kern_pgdir, base, size, pa, PTE_PCD | PTE_PWT | PTE_W);
+	base += size; //Update for next call
+	return (void*)(base - size) // Return base before it was updated
 	panic("mmio_map_region not implemented");
 }
 
